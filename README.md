@@ -149,6 +149,17 @@ variable to specify a different port.
 
 ---
 
+## Security Considerations
+
+The MCP Connector implements several security measures:
+
+- **Authentication**: All API endpoints require token-based authentication
+- **Input Validation**: Request parameters and payloads are validated
+- **Command Sanitization**: Command arguments are sanitized to prevent injection attacks
+- **Error Handling**: Error responses are designed to prevent information disclosure
+
+---
+
 ## License
 
 MIT

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mcp-connector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-connector
+    ports:
+      - "12757:12757"
+    environment:
+      - PORT=12757
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-default_auth_token}
+      # Uncomment the following lines to enable HTTPS
+      # - CERTFILE=/certs/certificate.crt
+      # - KEYFILE=/certs/privatekey.key
+    # Uncomment the following if you need to mount certificates for HTTPS
+    # volumes:
+    #   - ./certs:/certs:ro
+    restart: unless-stopped
+    networks:
+      - mcp-network
+    depends_on:
+      - gpt-model-comparison-mcp
+
+  # GPT Model Comparison MCP Server
+  gpt-model-comparison-mcp:
+    build:
+      context: ./mcp-servers/model-comparison
+      dockerfile: Dockerfile
+    container_name: gpt-model-comparison-mcp
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge

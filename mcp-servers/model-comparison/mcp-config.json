@@ -1,0 +1,12 @@
+{
+  "gpt-model-comparison": {
+    "command": "curl",
+    "args": [
+      "-X", "POST",
+      "http://gpt-model-comparison-mcp:3000/mcp",
+      "-H", "Content-Type: application/json",
+      "-d", "{\"name\": \"get_optimal_model\", \"arguments\": {\"task_type\": \"code_generation\", \"context_length\": 1000, \"multimodal_required\": false, \"optimize_for\": \"balanced\"}}"
+    ],
+    "env": {}
+  }
+}

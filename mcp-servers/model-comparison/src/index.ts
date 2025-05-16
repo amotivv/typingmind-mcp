@@ -1,5 +1,45 @@
-import { McpToolServer } from '@modelcontextprotocol/sdk/server/tool.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+// Create our own local server implementation since we don't have direct access to the tool.js module
+class McpToolServer {
+  server: McpServer;
+  port: number;
+
+  constructor({ server, port }: { server: McpServer; port: number }) {
+    this.server = server;
+    this.port = port;
+  }
+
+  async listen() {
+    const app = express();
+    app.use(express.json());
+
+    // Handle MCP requests
+    app.post('/mcp', async (req, res) => {
+      try {
+        const { name, arguments: args } = req.body;
+        console.log(`Received request for tool: ${name}`);
+        
+        const response = await this.server.handleToolCall({ name, arguments: args });
+        res.json(response);
+      } catch (error) {
+        console.error('Error handling MCP request:', error);
+        res.status(500).json({
+          content: [{ 
+            type: 'text',
+            text: JSON.stringify({ error: 'Error processing tool request' }, null, 2)
+          }]
+        });
+      }
+    });
+
+    // Start listening
+    return new Promise<void>((resolve) => {
+      app.listen(this.port, () => {
+        resolve();
+      });
+    });
+  }
+}
 import { z } from 'zod';
 import { models, TaskType } from './models';
 import { 

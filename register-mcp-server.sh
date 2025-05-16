@@ -35,10 +35,11 @@ curl -X POST \
     "gpt-model-comparison": {
       "command": "curl",
       "args": [
+        "-s",
         "-X", "POST",
         "http://gpt-model-comparison-mcp:3000/mcp",
         "-H", "Content-Type: application/json",
-        "-d", "{}"
+        "-d", "{\"name\": \"list_models\", \"arguments\": {\"include_details\": true}}"
       ],
       "env": {}
     }

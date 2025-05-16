@@ -1,10 +1,28 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+// Extend the McpServer to add a getTools method
+class ExtendedMcpServer extends McpServer {
+  private tools: Array<{
+    name: string;
+    parameters: any;
+    handler: (args: any) => Promise<any>;
+  }> = [];
+
+  tool(name: string, parameters: any, handler: (args: any) => Promise<any>) {
+    this.tools.push({ name, parameters, handler });
+    return super.tool(name, parameters, handler);
+  }
+
+  getTools() {
+    return this.tools;
+  }
+}
+
 // Create our own local server implementation since we don't have direct access to the tool.js module
 class McpToolServer {
-  server: McpServer;
+  server: ExtendedMcpServer;
   port: number;
 
-  constructor({ server, port }: { server: McpServer; port: number }) {
+  constructor({ server, port }: { server: ExtendedMcpServer; port: number }) {
     this.server = server;
     this.port = port;
   }
@@ -16,10 +34,27 @@ class McpToolServer {
     // Handle MCP requests
     app.post('/mcp', async (req, res) => {
       try {
-        const { name, arguments: args } = req.body;
+        const { name, arguments: args = {} } = req.body;
         console.log(`Received request for tool: ${name}`);
         
-        const response = await this.server.handleToolCall({ name, arguments: args });
+        // Find the tool in the server's registry
+        const tool = this.server.getTools().find(t => t.name === name);
+        
+        if (!tool) {
+          console.error(`Tool not found: ${name}`);
+          return res.status(404).json({
+            content: [{ 
+              type: 'text',
+              text: JSON.stringify({ 
+                error: `Tool '${name}' not found`,
+                available_tools: this.server.getTools().map(t => t.name)
+              }, null, 2)
+            }]
+          });
+        }
+        
+        // Call the tool handler
+        const response = await tool.handler(args);
         res.json(response);
       } catch (error) {
         console.error('Error handling MCP request:', error);
@@ -53,7 +88,7 @@ import {
 import express from 'express';
 
 // Create the MCP server
-const server = new McpServer({
+const server = new ExtendedMcpServer({
   name: "GPT Model Comparison",
   version: "1.0.0",
   description: "Tools for comparing and selecting optimal GPT models based on task requirements and cost considerations"
